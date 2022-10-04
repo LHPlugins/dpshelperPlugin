@@ -92,19 +92,36 @@ public class DPSHelperPlugin extends Plugin
 				case 422: //PUNCH
 				case 423: //KICK
 				case 426: //BOW
-				case 11989: //AGS SPEC
-				case 11993: //SS SPEC
-				case 11995: //SGS SPEC
-				case 12169: //Mining with Dragon Pickaxe
-				case 1658: //whip attack
-				case 1665: //Granite maul attack
-				case 1667: //Granite Maul special
-				case 2066: //dharoks crush
-				case 2067: //dharoks slash
-				case 2068: //torag attack
-				case 2080: //guthan poke
-				case 2081: //guthan slash
-				case 2082: //guthan crush
+				case 390: //BoS slash
+				case 386: //BoS lunge
+				case 7045: //bgs chop
+				case 7054: //bgs smash
+				case 7055: //bgs block
+				case 1167: // trident attack
+				case 381: //ZHasta stab
+				case 440: //ZHasta swipe
+				case 419: //ZHasta pound
+				case 414: //Staff pummel
+				case 7617: //Knife throw
+				case 401: //Pickaxe spike
+				case 400: //Pickaxe smash
+				case 428: //Halberd jab
+				case 407: //2h block
+				case 406: //2h smash
+				case 1665: //Granite maul pound
+				case 377: //dds slash
+				case 376: //dds stab
+				case 7552: //crossbow rapid
+				case 2068: //torag hammers
+				case 1203: //halberd spec
+				case 7642: //bgs spec
+				case 1062: //dds spec
+				case 7515: //dragon sword spec
+				case 1658: //whip spec
+				case 1060: //dragon mace spec
+				case 2890: //arclight spec
+				case 1872: //d scim spec
+				case 1667: //granite maul spec
 					avgTicks.add(gameTicks);
 					handleLastAttack();
 					attacks++;
