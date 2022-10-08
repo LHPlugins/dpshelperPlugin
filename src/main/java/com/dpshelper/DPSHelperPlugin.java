@@ -29,7 +29,6 @@ public class DPSHelperPlugin extends Plugin
 	private int attackToReset;
 	private int attacks;
 	private int gameTicks;
-	private int lastAttackInTicks;
 	private List<Integer> avgTicks;
 
 	@Provides
@@ -49,7 +48,7 @@ public class DPSHelperPlugin extends Plugin
 
 	private void resetPlugin(){
 		gameTicks = 0;
-		lastAttackInTicks = 0;
+		attacks = 0;
 		attackToReset = config.getAttackReset();
 		avgTicks = new ArrayList<>();
 	}
@@ -100,7 +99,7 @@ public class DPSHelperPlugin extends Plugin
 				case 423: //KICK
 				case 426: //BOW
 				case 390: //BoS slash
-				case 386: //BoS lunge
+				case 386: //BoS stab
 				case 7045: //bgs chop
 				case 7054: //bgs smash
 				case 7055: //bgs block
