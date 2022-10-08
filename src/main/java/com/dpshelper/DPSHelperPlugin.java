@@ -44,6 +44,9 @@ public class DPSHelperPlugin extends Plugin
 		resetPlugin();
 	}
 
+	@Override
+	protected void shutDown(){resetPlugin();}
+
 	private void resetPlugin(){
 		gameTicks = 0;
 		lastAttackInTicks = 0;
@@ -54,7 +57,7 @@ public class DPSHelperPlugin extends Plugin
 	@Subscribe
 	public void onGameTick(final GameTick gameTick)
 	{
-		if (attacks == attackToReset)
+		if (attacks >= attackToReset)
 			postSummary();
 		gameTicks++;
 	}
@@ -85,7 +88,11 @@ public class DPSHelperPlugin extends Plugin
 	{
 		final Actor actor = event.getActor();
 		final int animationId = actor.getAnimation();
+
 		if (actor instanceof Player){
+			if (animationId == config.getSkip1() || animationId == config.getSkip2())
+				return;
+
 			switch (animationId){
 				case -1: //IDLE
 					break;
