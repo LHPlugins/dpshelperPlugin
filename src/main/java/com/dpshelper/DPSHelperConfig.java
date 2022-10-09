@@ -23,6 +23,14 @@ public interface DPSHelperConfig extends Config
 	String extraSettings = "extraSettings";
 
 	@ConfigItem(
+			keyName = "enableSummary",
+			name = "Enable AVG Attacks",
+			description = "This enables you to pick a number of attacks before it gives you a avg ticks pr attack",
+			section = generalSettings
+	)
+	default boolean getSummary(){return false;}
+
+	@ConfigItem(
 		keyName = "attackToReset",
 		name = "Attacks to reset",
 		description = "How many attacks before it reset and send summary",
@@ -37,6 +45,14 @@ public interface DPSHelperConfig extends Config
 			section = generalSettings
 	)
 	default boolean getEachAttack(){return false;}
+
+	@ConfigItem(
+			keyName = "enableUI",
+			name = "Enable UI",
+			description = "This enables UI instead of chat messages",
+			section = generalSettings
+	)
+	default boolean getUI(){return false;}
 
 	@ConfigItem(
 			keyName = "skip1",
@@ -55,3 +71,4 @@ public interface DPSHelperConfig extends Config
 	default int getSkip2(){return 0;}
 
 }
+
