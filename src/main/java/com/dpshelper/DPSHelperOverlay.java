@@ -1,5 +1,6 @@
 package com.dpshelper;
 
+import net.runelite.api.ChatMessageType;
 import net.runelite.client.ui.overlay.OverlayMenuEntry;
 import net.runelite.client.ui.overlay.OverlayPanel;
 import net.runelite.client.ui.overlay.OverlayPosition;
@@ -27,12 +28,14 @@ class DPSHelperOverlay extends OverlayPanel {
     @Override
     public Dimension render(Graphics2D graphics){
         if (config.getUI()){
+            //Variables used to make the string we need to display
             int tick = plugin.getLastAttackTick();
+            //Text string to be displayed
             final String lastAttack = "Ticks since last attack: " + tick;
 
             panelComponent.getChildren().add(TitleComponent.builder()
                     .text(lastAttack)
-                    .color(tick > plugin.getCurrentAS() ? Color.RED : Color.GREEN)
+                    .color(tick == plugin.getASpeed2() ? Color.GREEN : Color.RED)
                     .build());
 
             panelComponent.setPreferredSize(new Dimension(

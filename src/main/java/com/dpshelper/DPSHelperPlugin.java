@@ -24,7 +24,7 @@ import java.util.List;
 @Slf4j
 @PluginDescriptor(
 	name = "DPS Helper",
-		description = "This plugin you to lose less ticks when attacking npcs, by telling you the ticks between attacks, so you can optimize your gameplay"
+		description = "This plugin helps you to lose less ticks when attacking npcs, by telling you the ticks between attacks, so you can optimize your gameplay"
 )
 public class DPSHelperPlugin extends Plugin
 {
@@ -39,15 +39,23 @@ public class DPSHelperPlugin extends Plugin
 	@Inject
 	private ItemManager itemManager;
 
-	private int attackToReset;
-	private int attacks;
+	private int attackToReset; //Used for summary
+	private int attacks; //Users attack count
 
-	private int gameTicks;
 	@Getter
-	private int lastAttackTick;
-	private List<Integer> avgTicks;
+	private int gameTicks; //GameTicks, used for logic in summary & last attack
 	@Getter
-	private int currentAS = 4;
+	private int cooldown;
+	@Getter
+	private int lastAttackTick; //This holds gametick from the method handleLastAttack to be displayed on the overlay or in chat
+	private int totalTickLost;
+	private int aSpeed1;
+	@Getter
+	private int aSpeed2;
+	@Getter
+	private int currentAS; //This is a variable to hold the users current weapon the player has equipped
+	private boolean inCombat = false;
+
 
 	@Provides
 	DPSHelperConfig provideConfig(ConfigManager configManager)
@@ -59,49 +67,55 @@ public class DPSHelperPlugin extends Plugin
 	protected void startUp()
 	{
 		overlayManager.add(overlay);
-		resetPlugin();
+		resetPlugin(); //Reset on startup
 	}
 
 	@Override
-	protected void shutDown(){resetPlugin(); overlayManager.remove(overlay); lastAttackTick = 0; currentAS = 0;}
+	protected void shutDown()
+	{
+		resetPlugin();
+		overlayManager.remove(overlay);
+		lastAttackTick = 0;
+		currentAS = 0;
+		cooldown = 0;
+		inCombat = false;
+	}
 
-	private void resetPlugin(){
+	private void resetPlugin()
+	{
 		gameTicks = 0;
 		attacks = 0;
 		attackToReset = config.getAttackReset();
-		avgTicks = new ArrayList<>();
+		totalTickLost = 0;
+	}
+
+	private void resetGameTick()
+	{
+		gameTicks = 0;
+	}
+
+	private void idleReset(){
+		gameTicks = 0;
+		inCombat = false;
 	}
 
 	@Subscribe
 	public void onGameTick(final GameTick gameTick)
 	{
-		if (attacks == 0)
-			return;
+		if (gameTicks > config.getMaxIdle())
+			idleReset();
 
-		gameTicks++;
-	}
-
-	private int getAVG(){
-		int avg = 0;
-
-		for (int i = 0; i < avgTicks.size(); i++) {
-			avg += avgTicks.get(i);
+		if (inCombat) {
+			gameTicks++;
+			if (--cooldown <= 0) {
+				//nothing
+			}
 		}
-		avg /= avgTicks.size();
-
-		return avg;
-	}
-
-	private void postSummary(){
-		String s = "Ticks between attacks avg: " + getAVG() + " ticks";
-		if (client.getGameState() == GameState.LOGGED_IN){
-			client.addChatMessage(ChatMessageType.GAMEMESSAGE, "", s, null);
-		}
-		resetPlugin();
 	}
 
 	@Subscribe
-	public void onAnimationChanged(final AnimationChanged event){
+	public void onAnimationChanged(final AnimationChanged event)
+	{
 		final Actor actor = event.getActor();
 		final int animationId = actor.getAnimation();
 
@@ -207,29 +221,64 @@ public class DPSHelperPlugin extends Plugin
 				case 4505: //Nightmare Staff
 				case 6118: //fang spec
 				case 9471: //fang stab
-					avgTicks.add(gameTicks);
+					totalTickLost += getTickLostOnAttack();
+					handleAttack();
+					inCombat = true;
+					if (cooldown <= 0){
+						getAttackSpeed();
+						cooldown = currentAS; //Update currentAS for the current equipped weapon
+					}
 					attacks++;
-					getAttackSpeed();
-					handleLastAttack();
 					checkSummary();
-					resetTick();
+					resetGameTick();
 					break;
 			}
 		}
 	}
 
-	private void checkSummary(){
+	private int getTickLostOnAttack()
+	{
+		//Calc tick lost on attack
+		int sum = 0;
+		if (!inCombat){
+			if (attacks == 0)
+				sum = 0;
+		}else
+			sum = gameTicks - currentAS;
+		return sum;
+	}
+
+	private void checkSummary()
+	{
 		if (!config.getSummary())
 			return;
+
 		if (attacks >= attackToReset)
 			postSummary();
 	}
 
-	private void handleLastAttack(){
-		if (!config.getEachAttack())
+	private void postSummary()
+	{
+		String s = "You lost " + totalTickLost + " ticks in the last " + config.getAttackReset() + " attacks";
+		if (client.getGameState() == GameState.LOGGED_IN){
+			client.addChatMessage(ChatMessageType.GAMEMESSAGE, "", s, null);
+		}
+		resetPlugin();
+	}
+
+	private void handleAttack()
+	{
+		if(!config.getEachAttack())
 			return;
 
-		lastAttackTick = gameTicks;
+		if (!inCombat){
+			if (attacks == 0) {
+				getAttackSpeed();
+				lastAttackTick = currentAS;
+			}
+		}else{
+			 lastAttackTick = gameTicks;
+		}
 
 		if (config.getUI())
 			return;
@@ -239,16 +288,22 @@ public class DPSHelperPlugin extends Plugin
 		}
 	}
 
-	private void resetTick(){
-		gameTicks = 0;
-	}
-
-	private void getAttackSpeed(){
+	private void getAttackSpeed()
+	{
+		//This method is used to get the attackspeed of the players equipped weapon
 		int itemId = client.getLocalPlayer().getPlayerComposition().getEquipmentId(KitType.WEAPON);
 		final ItemStats stats = itemManager.getItemStats(itemId, false);
 		if (stats == null)
 			return;
 		final ItemEquipmentStats currentEquipment = stats.getEquipment();
-		currentAS = currentEquipment.getAspeed();
+		handleAS(currentEquipment.getAspeed());
+	}
+
+	private void handleAS(int aSpeed)
+	{
+		aSpeed1 = currentAS;
+		aSpeed2 = aSpeed1;
+		currentAS = aSpeed;
+
 	}
 }
